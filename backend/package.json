@@ -1,0 +1,36 @@
+{
+  "name": "true-lens-backend",
+  "version": "1.0.0",
+  "description": "Backend server for True Lens image verification platform",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "blockchain",
+    "image-verification",
+    "forensics"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "image-hash": "^7.0.1",
+    "ipfs-http-client": "^60.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.0.0",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.34.5",
+    "web3": "^4.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
