@@ -1,14 +1,16 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const upload = multer({
+  storage: multer.memoryStorage()
+});
+const auth = require("../middleware/auth.middleware");
 const imageController = require("../controllers/image.controller");
-const authMiddleware = require("../middleware/auth.middleware");
-const uploadMiddleware = require("../middleware/upload.middleware");
 
-// POST /api/images/upload
 router.post(
   "/upload",
-  authMiddleware,
-  uploadMiddleware.single("image"),
+  auth,
+  upload.single("image"),
   imageController.upload
 );
 
