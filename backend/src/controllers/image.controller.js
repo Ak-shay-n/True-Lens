@@ -4,6 +4,9 @@ const hashService = require("../services/hash.service");
 const attestationService = require("../services/attestation.service");
 const signingService = require("../services/signing.service");
 const fileType = require("file-type");
+const crypto = require("crypto");
+const blockchainService = require("../services/blockchain.service");
+
 
 // TEMP key store (later DB / wallet)
 const userKeys = {};
@@ -80,7 +83,16 @@ exports.upload = async (req, res) => {
     // 4. Sign attestation
     const signature = signingService.sign(canonical, privateKey);
 
-    // 5. Cleanup image
+    // 5. Hash attestation JSON
+    const attestationHash = crypto
+      .createHash("sha256")
+      .update(canonical)
+      .digest("hex");
+
+    // 6. Store on blockchain
+    await blockchainService.storeAttestation("0x" + attestationHash);
+
+    // 7. Cleanup image
     try {
       if (wroteTempFile && workingPath) fs.unlinkSync(workingPath);
       if (!wroteTempFile && diskPath) fs.unlinkSync(diskPath);
@@ -89,12 +101,14 @@ exports.upload = async (req, res) => {
     res.json({
       attestation,
       signature,
-      publicKey
+      publicKey,
+      attestationHash
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Get image by ID
 exports.getImage = async (req, res) => {
