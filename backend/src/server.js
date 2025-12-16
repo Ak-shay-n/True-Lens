@@ -1,3 +1,4 @@
+console.log("🚀 server.js loaded");
 require("dotenv").config();
 const app = require("./app");
 const { web3 } = require("./config/web3");
