@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const jwtConfig = require("../config/jwt");
 
 // TEMP in-memory user store (replace later with DB)
 const users = [];
@@ -40,9 +39,9 @@ exports.login = async (req, res) => {
   }
 
   const token = jwt.sign(
-    { userId: user.id, email: user.email },
-    jwtConfig.secret,
-    { expiresIn: jwtConfig.expiresIn }
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
   );
 
   res.json({ token });

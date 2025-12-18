@@ -11,7 +11,7 @@ router.post(
   "/upload",
   auth,
   upload.single("image"),
-  imageController.upload
+  imageController.uploadImage
 );
 
 // GET /api/images/:id

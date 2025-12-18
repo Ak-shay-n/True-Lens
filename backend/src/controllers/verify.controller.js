@@ -5,16 +5,11 @@ const path = require("path");
 const hashService = require("../services/hash.service");
 const blockchainService = require("../services/blockchain.service");
 const forensicService = require("../services/forensic.service");
+const attestationStore = require("../services/attestation.store");
+const phashRegistry = require("../services/phash.registry");
+const { hammingDistance } = require("../utils/phash.util");
 
 const PHASH_THRESHOLD = 10; // lower = more similar
-
-const hammingDistance = (a, b) => {
-  let dist = 0;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) dist++;
-  }
-  return dist;
-};
 
 exports.verifyImage = async (req, res) => {
   try {
@@ -53,8 +48,65 @@ exports.verifyImage = async (req, res) => {
 
       const pHash = await hashService.pHash(filePathForHash);
 
+      let verdict = {
+        status: "NOT_VERIFIED",
+        confidence: "LOW",
+        reason: []
+      };
+
       // 2. Blockchain verification
-      const exists = await blockchainService.verifyAttestation("0x" + sha256);
+      // 1. Try exact image hash match
+      const attestation = attestationStore.findByImageHash(sha256);
+
+      if (attestation) {
+        const exists = await blockchainService.verifyAttestation(
+          "0x" + attestation.attestationHash
+        );
+
+        if (exists) {
+          verdict.status = "VERIFIED";
+          verdict.confidence = "VERY_HIGH";
+          verdict.reason.push("Exact blockchain attestation match");
+
+          return res.json({
+            sha256,
+            pHash,
+            blockchainMatch: true,
+            verdict
+          });
+        }
+      }
+
+      // After exact-match check, keep PROBABLE_MATCH logic based on pHash.
+      const probable = attestationStore.findByPHash(pHash);
+
+      // 3. Perceptual similarity check
+      let probableMatch = null;
+      if (probable) {
+        verdict.status = "PROBABLE_MATCH";
+        verdict.confidence = "MEDIUM_HIGH";
+        verdict.reason.push("Perceptual similarity detected");
+        probableMatch = {
+          attestationHash: probable.attestationHash,
+          signer: probable.signer,
+          distance: 0
+        };
+      } else {
+        const registry = phashRegistry.getAll();
+
+        for (const record of registry) {
+          const distance = hammingDistance(pHash, record.pHash);
+
+          if (distance <= PHASH_THRESHOLD) {
+            probableMatch = {
+              attestationHash: record.attestationHash,
+              signer: record.signer,
+              distance
+            };
+            break;
+          }
+        }
+      }
 
       // 3. Forensics
       const exif = forensicService.extractExif(buffer);
@@ -73,18 +125,14 @@ exports.verifyImage = async (req, res) => {
       }
 
       // 5. Verdict
-      let verdict = {
-        status: "NOT_VERIFIED",
-        confidence: "LOW",
-        reason: []
-      };
-
-      if (exists) {
-        verdict.status = "VERIFIED";
-        verdict.confidence = "VERY_HIGH";
-        verdict.reason.push("Exact blockchain match");
-      } else {
-        verdict.reason.push("No exact blockchain match");
+      if (verdict.status === "NOT_VERIFIED") {
+        if (probableMatch) {
+          verdict.status = "PROBABLE_MATCH";
+          verdict.confidence = "MEDIUM_HIGH";
+          verdict.reason.push("Perceptual similarity detected");
+        } else {
+          verdict.reason.push("No exact blockchain match");
+        }
       }
 
       if (aiFlags.length > 0) {
@@ -94,7 +142,8 @@ exports.verifyImage = async (req, res) => {
       return res.json({
         sha256,
         pHash,
-        blockchainMatch: exists,
+        blockchainMatch: false,
+        probableMatch,
         exifPresent: !!exif,
         aiFlags,
         verdict

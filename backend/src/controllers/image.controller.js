@@ -3,10 +3,11 @@ const path = require("path");
 const hashService = require("../services/hash.service");
 const attestationService = require("../services/attestation.service");
 const signingService = require("../services/signing.service");
+const attestationStore = require("../services/attestation.store");
 const fileType = require("file-type");
 const crypto = require("crypto");
 const blockchainService = require("../services/blockchain.service");
-
+const phashRegistry = require("../services/phash.registry");
 
 // TEMP key store (later DB / wallet)
 const userKeys = {};
@@ -18,12 +19,12 @@ exports.upload = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    if (!req.user || !req.user.userId) {
+    const userId = req.user?.userId ?? req.user?.id;
+    if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const diskPath = req.file.path;
-    const userId = req.user.userId;
 
     // Validate actual file type using magic bytes.
     // With memoryStorage, multer provides `req.file.buffer` and `req.file.path` is undefined.
@@ -89,6 +90,15 @@ exports.upload = async (req, res) => {
       .update(canonical)
       .digest("hex");
 
+    attestation.attestationHash = attestationHash;
+    attestationStore.save(attestation);
+
+    phashRegistry.add({
+      attestationHash,
+      pHash,
+      signer: `user:${userId}`
+    });
+
     // 6. Store on blockchain
     await blockchainService.storeAttestation("0x" + attestationHash);
 
@@ -108,6 +118,8 @@ exports.upload = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.uploadImage = exports.upload;
 
 
 // Get image by ID

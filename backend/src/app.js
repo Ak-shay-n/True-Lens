@@ -5,6 +5,15 @@ const imageRoutes = require("./routes/image.routes");
 const authRoutes = require("./routes/auth.routes");
 const verifyRoutes = require("./routes/verify.routes");
 
+const logRouterRoutes = (basePath, router) => {
+  if (!router || !Array.isArray(router.stack)) return;
+  router.stack.forEach((layer) => {
+    if (!layer.route) return;
+    const methods = Object.keys(layer.route.methods).join(",").toUpperCase();
+    console.log(methods, `${basePath}${layer.route.path}`);
+  });
+};
+
 const app = express();
 
 app.use(cors());
@@ -18,22 +27,8 @@ app.get("/", (req, res) => {
 });
 
 console.log("🔍 Registered routes:");
-app._router.stack.forEach((layer) => {
-  if (layer.route) {
-    console.log(
-      Object.keys(layer.route.methods).join(",").toUpperCase(),
-      layer.route.path
-    );
-  } else if (layer.name === "router") {
-    layer.handle.stack.forEach((handler) => {
-      if (handler.route) {
-        console.log(
-          Object.keys(handler.route.methods).join(",").toUpperCase(),
-          "/api/verify" + handler.route.path
-        );
-      }
-    });
-  }
-});
+logRouterRoutes("/api/image", imageRoutes);
+logRouterRoutes("/api/auth", authRoutes);
+logRouterRoutes("/api/verify", verifyRoutes);
 
 module.exports = app;
