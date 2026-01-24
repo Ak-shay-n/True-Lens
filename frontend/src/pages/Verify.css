@@ -1,0 +1,93 @@
+.verify-container {
+  min-height: calc(100vh - 70px);
+  padding: var(--spacing-xl) var(--spacing-md);
+  background: var(--background-alt);
+}
+
+.verify-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.verify-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.verify-header h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-primary);
+}
+
+.verify-header p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+.verify-card {
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-xl);
+  animation: fadeIn 0.6s ease-out;
+}
+
+.result-card.authentic {
+  border-left: 4px solid var(--success-color);
+}
+
+.result-card.not-authentic {
+  border-left: 4px solid var(--warning-color);
+}
+
+.status-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--spacing-lg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-icon.success {
+  background: rgba(38, 142, 108, 0.1);
+}
+
+.status-icon.success svg {
+  stroke: var(--success-color);
+}
+
+.status-icon.warning {
+  background: rgba(230, 134, 25, 0.1);
+}
+
+.status-icon.warning svg {
+  stroke: var(--warning-color);
+}
+
+.status-icon svg {
+  width: 48px;
+  height: 48px;
+  stroke-width: 2;
+}
+
+.result-message {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .verify-container {
+    padding: var(--spacing-md);
+  }
+
+  .verify-card {
+    padding: var(--spacing-lg);
+  }
+}
